@@ -1,0 +1,667 @@
+\chapter{Basic Types}
+\label{cha:basictypes}
+
+      \libit defines some new basic types to extend the standard C 
+      types (char, int, double, float). They are used to handle
+      some commonly used mathematical objects such as:
+
+\begin{itemize}
+\item complex numbers (cplx)
+\item vectors (Vec, vec, ivec, bvec, cvec)
+\item matrices (Mat, mat, imat, bmat, cmat)
+\item functions (it\_function\_t, it\_ifunction\_t)
+\end{itemize}
+
+\section{Complex numbers}
+
+      A new type cplx is used to represents complex numbers. For a given
+      complex number $c$, the real part is accessed using \function{creal(c)}, while the
+      imaginary part is accessed with \function{cimag(c)}. Both the real and imaginary
+      parts are stored as double precision floating point numbers (double).
+
+     During declaration, a complex number can be initialized using the cplx
+     macro. The first argument of the macro is the real part, the second is the
+     imaginary part.
+
+     Basic operations are defined on complex numbers such as the
+     addition (\function{cadd}), the subtraction (\function{csub}), the
+     multiplication (\function{cmul}), and the division
+     (\function{cdiv}). The inversion (\function{cinv}) can also be used
+     instead of dividing one by a complex. The module of a complex is
+     obtained using cnorm. To test a complex for equality with another
+     complex, the \function{ceq} macro is defined, as the == operator
+     is not available.
+
+  The operations available on complex numbers are summarized in the
+  following table, where a,b are reals and x, y, z are complex numbers:
+
+\begin{center}
+\begin{tabular}{|p{5cm}p{5cm}|}
+\hline
+Operation & Expression \\
+\hline
+z = cplx(a,b) & z = $a + i b$ \\
+a = creal(x) & a = $\textrm{Re}(x)$ \\
+b = cimag(x) & b = $\textrm{Im}(x)$ \\
+z = cadd(x,y) & z = $x + y$ \\
+z = csub(x,y) & z = $x - y$ \\
+z = cmul(x,y) & z = $x * y$ \\
+z = cdiv(x,y) & z = $x / y$ \\
+z = cinv(x) & z = $1 / x$ \\
+z = cconj(x) & z = $x^*$ \\
+z = cnorm(x) & z = $\|x\|$ \\
+ceq(x,y) & x == $y$ \\
+\hline
+\end{tabular}
+\end{center}
+
+The following commonly used constant complex numbers are also defined:
+
+\begin{center}
+\begin{tabular}{|p{5cm}p{5cm}|}
+\hline
+       Identifier &    Value \\
+\hline
+          cplx\_0 &       0 \\
+          cplx\_1 &       1 \\
+          cplx\_I &       i (=$\sqrt{-1}$) \\
+\hline
+\end{tabular}
+\end{center}
+
+    The following example illustrates how to declare and use complex numbers:
+
+\begin{program}{Complex number example}{pro:cplx}
+  cplx x = cplx(1.5, 2.5), y = cplx(1.7, 2.1), z;
+
+  z = cmul(x, y); /* multiply x by y and store the result in z */
+  z = cconj(x);   /* conjugate of x */
+\end{program}
+
+\section{Vectors}
+\label{sec:vectors}
+
+     The vector type (Vec) allows to define vectors of elements of any
+     type.  These generic vectors are created with the \function{Vec\_new} macro
+     by specifying the type of element it contains and its initial
+     length. For people familiar with C++, this is similar to a
+     templated type.  Vectors are used like C arrays, except their
+     length is stored internally and can be changed dynamically. A
+     vector length is accessed through the \function{Vec\_length} macro and set
+     using \function{Vec\_set\_length}. Vectors are destroyed with the
+     \function{Vec\_delete} call, releasing the allocated resources.
+
+     As vectors are actually pointers to their elements, they can be used in
+     any place where a pointer type to the element is needed. The element size
+     (in bytes) of a vector is also accessible using the \function{Vec\_element\_size}
+     macro. This allows for a great flexibility due to compatibility with
+     existing C functions. For example to read the content of a vector from a 
+     binary file, the following code can be used:
+
+
+\begin{program}{Vector example}{pro:vector}
+Vec v = Vec_new(float, 10); /* create a new vector of 10 float elements */
+/* fill the vector with 10 floats read from a binary file identified by 'fd' */
+fread(v, Vec_element_size(v), Vec_length(v), fd); 
+Vec_delete(v);              /* release the resources used by v */
+\end{program}
+
+      For practical reasons and ease of use, this generic Vec type is derived
+      into four commonly used vector types depicted Table~\ref{tab:vectortypes}:
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{5cm}p{5cm}|}
+\hline
+       Vector type &  Element type \\
+\hline
+          vec &	  double \\
+          ivec &  int \\
+          bvec &  unsigned char \\
+          cvec &  cplx \\
+\hline
+\end{tabular}
+\label{tab:vectortypes}
+\caption{Vectors types}
+\end{center}
+\end{table}
+
+  Vector elements are accessed with the bracket operator []
+    starting at index $0$. For instance, \texttt{v[3]} corresponds to the fourth
+    element of vector \texttt{v}.  Functions requiring an index can be given
+    the 'end' keyword instead, which corresponds to the last index of
+    the vector to process.  
+
+  Each vector type has specific functions to handle it, which perform
+    some additional type checking. Therefore, although the length of a
+    ivec can be retrieved using the \function{Vec\_length} macro, the
+    \function{ivec\_length} function is prefered. These specific
+    functions being defined for all types
+    (i.e. \function{vec\_length}, \function{ivec\_length},
+    \function{bvec\_length}, \function{cvec\_length}), only the
+    \texttt{vec\_} variants will be documented here when there is no
+    ambiguity on how to derive the \texttt{ivec\_}, \texttt{bvec\_} and
+    \texttt{cvec\_} variants.
+
+    Vectors can be copied using the \function{vec\_clone()}
+  function. This will create a new copy of the vector, properly
+  allocated and with each element copied independently. Using the
+  equal sign (=) will \emph{not} copy a vector, rather create a
+  reference to it (modifying one will modify the other). Similarly,
+  testing vectors for equality is done using the \function{vec\_eq()}
+  function instead of the == operator.  Also, many functions, such as
+  \function{vec\_set\_length()} which sets the length of a vector, may
+  modify the actual value of the vector pointer. References created
+  using the equal sign are then \emph{invalid}. Unless you know what
+  you're doing, it is generally better never to use the equal sign on
+  a vector and prefer the \function{vec\_clone()} call instead. 
+
+\begin{program}{Copy, reference, and test for equality}{prog:copyrefequality}
+vec v = vec_new(2);   /* create a new vector of 2 double elements */
+v[0] = 0.0;
+v[1] = 0.5;
+vec v1 = v;            /* create a reference to the vector v */
+vec v2 = vec_clone(v); /* create a copy of the vector v */
+if(v2 == v)            /* v2 == v ? false */
+  printf("same object\n");  
+if(vec_eq(v2,v))       /* content of v2 same as v ? true */
+  printf("same vector\n");  
+v1[0] = 1.0;
+v2[1] = 2.0;
+/* v contains [ 1.0 0.5 ] */
+/* v1 contains [ 1.0 0.5 ] (always the same as v) */
+/* v2 contains [ 0.0 2.0 ] */
+\end{program}
+
+    Many common vectors are created easily. Constant vectors,
+  containing the same element repeated over the length of the vector,
+  are created using the \function{vec\_new\_set()} call. In particular
+  a vector full of zero or full of one is created using the
+  \function{vec\_new\_zeros()} or \function{vec\_new\_ones()} call
+  respectively. Arithmetic series are created using the 
+\function{vec\_new\_arithm()} call. In
+  particular the vector $0,\dotsc,N-1$ is created with
+  \function{vec\_new\_range(N)} and the vector $1,\dotsc,N$ is created
+  using \function{vec\_new\_1N(N)}. Similarly, the \function{vec\_new\_geom()}
+ function allows to create geometric series. One particular case is the complex vectors
+  of the roots of unity, created using \function{cvec\_new\_unit\_roots()}.
+
+    Vectors can also be created directly from a string using
+    \function{vec\_new\_string()} by specifying the value of
+    each element. For more information on parsing and initialization
+    from strings see Chapter~\ref{cha:io}. 
+
+    All vector creation functions exist in a direct form allowing
+    their use on an already created vector. They generally have the
+    same function names, except for the '\_new'. For example
+    \function{vec\_set()} sets the value of an existing vector to a
+    constant value.
+
+\begin{program}{Common vectors}{pro:commonvectors}
+vec v0 = vec_new_zeros(5);    /* create the vector [ 0 0 0 0 0 ]   */
+vec v1 = vec_new_ones(5);     /* create the vector [ 1 1 1 1 1 ]   */
+vec v2 = vec_new_set(2.3, 3); /* create the vector [ 2.3 2.3 2.3 ] */
+vec v3 = vec_new_1N(5);       /* create the vector [ 1 2 3 4 5 ]   */
+vec v4 = vec_new_range(5);    /* create the vector [ 0 1 2 3 4 ]   */
+vec v5 = vec_new_arithm(1.5, 0.1, 3); /* vector [ 1.5 1.6 1.7 ]    */
+vec v6 = vec_new_geom(1.5, 0.1, 3);   /* vector [ 1.5 0.15 0.015 ] */
+cvec v7 = cvec_new_unit_roots(4);     /* vector [ 1 i -1 -i ]      */
+vec v8 = vec_new_string("0.1 0.3 0.4"); /* vector [ 0.1 0.3 0.4 ]  */
+
+vec_ones(v3);                           /* set v3 to [ 1 1 1 1 1 ] */
+\end{program}
+
+    The most common arithmetic operations are defined on vectors. Scalar
+    operations include \function{vec\_incr()}, \function{vec\_decr()},
+    \function{vec\_mul\_by()} and \function{vec\_div\_by()}, which respectively add,
+    subtract, multiply or divide each element of a vector with a
+    scalar element. Elementwise operations between vectors are
+    performed using the \function{vec\_add()}, \function{vec\_sub()}, 
+    \function{vec\_mul()}, \function{vec\_div()} functions which respectively
+    add, subtract, multiply or divide each element of a first vector
+    with the corresponding element in the second vector. The inner
+    product between two vectors is computed with \function{vec\_inner\_product()}. The
+    concatenation of two vectors is performed using the \function{vec\_concat()} function.  
+
+    Mathematical functions can be applied to vectors using the
+    \function{vec\_apply\_function()} call. Functions are defined
+    using the it\_function\_t type, for more information see
+    Section~\ref{sec:functions}. Commonly used functions, such as the
+    exponential, natural logarithm, base-10 logarithm, negation,
+    square, absolute value, and power are applied using the
+    \function{vec\_exp()}, \function{vec\_log()},
+    \function{vec\_log10()}, \function{vec\_neg()},
+    \function{vec\_sqr()}, \function{vec\_abs()} or
+    \function{vec\_pow()} functions respectively.
+
+    The sum of a vector is computed using \function{vec\_sum()}. It
+    can be computed partially between two indexes using the
+    \function{vec\_sum\_between()} call. Vectors are normalized using
+    \function{vec\_normalize()}, resulting in
+    a vector whose sum is equal to one. The mean of a vector is
+    obtained by \function{vec\_mean()}, while
+    the median is obtained using \function{vec\_median()}. The unbiased variance of
+    a vector can be computed with the \function{vec\_variance()} function, whereas the
+    norm of a vector is computed with \function{vec\_norm()}.
+
+
+\begin{program}{Operations on vectors}{pro:vectoroperations}
+vec v1 = vec_new_string("0.3 0.5 1");  /* vector [ 0.3 0.5 1 ]     */
+vec v2 = vec_new_string("2 -0.7 1.5"); /* vector [ 2 -0.7 1.5 ]    */
+vec_incr(v1, 1.3);                     /* v1 = [ 1.6 1.8 2.3 ]     */
+vec_mul_by(v1, 2);                     /* v1 = [ 3.2 3.6 4.6 ]     */
+vec_add(v1, v2);                       /* v1 = [ 5.2 2.9 2.5 ]     */
+double p = vec_inner_product(v1, v2);  /* p = 12.12                */
+vec_range(v1);                         /* v1 = [ 1 2 3 ]           */
+vec_exp(v1);                           /* v1 = [ 2.72 7.39 20.09 ] */
+vec_log(v1);                           /* v1 = [ 1 2 3 ]           */
+vec_neg(v1);                           /* v1 = [ -1 -2 -3 ]        */
+vec_sqr(v1);                           /* v1 = [ 1 4 9 ]           */
+double s = vec_sum(v1);                /* s = 1+4+9 = 14           */
+s = vec_sum_between(v1, 1, end);       /* s =   4+9 = 13           */
+double mean = vec_mean(v1);            /* mean = 14/3 = 4.67       */
+double var = vec_variance(v1);         /* var = 16.33              */
+\end{program}
+
+    Minimum and maximum values of a vector are obtained with the
+    \function{vec\_min()} and \function{vec\_max()} calls
+    respectively. The index in the vector where the minimum or maximum
+    occurs (argmin, argmax) are obtained with the
+    \function{vec\_min\_index()} and \function{vec\_max\_index()}
+    functions.
+
+    Vectors are sorted in increasing order using the
+    \function{vec\_sort()} or \function{ivec\_sort()} call. A vector
+    containing the indexes corresponding to increasing values of the
+    input vector can be created using the
+    \function{vec\_sort\_index()} and \function{ivec\_sort\_index()}
+    function. Since complex numbers are unordered, these functions are
+    not defined for cvec. The current algorithm for sorting is the
+    quick sort. Vectors can be reversed using
+    \function{vec\_reverse()} function, the first element being
+    exchanged with the last element and so forth. The number of
+    occurences of a value in a vector is available through the
+    \function{vec\_count()} function. Searching is performed using
+    \function{vec\_find} or \function{vec\_find\_first()} which
+    respectively return a vector of indexes of the search value or the
+    index of the first occurence of the value. Similarly,
+    \function{vec\_replace()} replaces each occurences of a given
+    value with another, returning the vector of indexes of the
+    replaced positions. The \function{vec\_index\_by()} functions
+    allows to shuffle a vector by creating a new vectors composed of
+    elements of the input vector indexed by the index vector. Note
+    that indexes can appear more than once in the indexing
+    vector. This function is particularly useful for interleaving or
+    dequantizing.
+
+\begin{program}{Sorting vectors}{pro:sortvectors}
+vec v = vec_new_string("2 -0.7 1.5");  /* vector [ 2 -0.7 1.5 ]         */
+double min = vec_min(v);               /* min = -0.7                    */
+int idx = vec_min_index(v);            /* idx = 1                       */
+ivec iv = vec_qsort_index(v);          /* iv = [ 1 2 0 ]                */
+vec_qsort(v);                          /* v = [ -0.7 1.5 2 ]            */
+vec_reverse(v);                        /* v = [ 2 1.5 -0.7 ]            */
+iv = vec_replace(v, 1.5, -1);          /* v = [ 2 -1 -0.7 ]; iv = [ 1 ] */
+iv = ivec_new_string("1 1 2");         /* iv = [ 1 1 2 ] */
+v = vec_index_by(v, iv);               /* v = [ -1 -1 -0.7 ] */
+\end{program}
+
+    Stacks are efficiently implemented using vectors. A new element is
+    added on top the stack using the \function{vec\_push()} call and
+    removed using the \function{vec\_pop()} call. The topmost element
+    is accessed using \function{vec\_head()}. Due to the use of
+    geometric reallocation, this operation is implemented in $O(N)$
+    time, where $N$ is the size of the vector. Similarly, vectors can
+    be used as lists using the \function{vec\_ins()} call to insert an
+    element and \function{vec\_del()} call to delete an
+    element. Insertion and deletion are in $O(N)$ time, with access in
+    $O(1)$ time. Finally, vectors can be used to represent sets, where
+    a value is appearing only once in the vector. The
+    \function{vec\_unique()} call creates a vector with exactly one
+    element for each value present in the input vector. The
+    \function{vec\_union()} and \function{vec\_intersection()} call create a
+    vector where each element is a value appearing exactly once in
+    either or both vectors respectively.
+
+\begin{program}{Stacks, lists and sets}{pro:stacklistset}
+vec v = vec_new(0);             /* empty vector */
+vec_push(v, 1.0);               /* v = [ 1.0 ]             */
+vec_push(v, 1.1);               /* v = [ 1.0 1.1 ]         */
+vec_push(v, 3.0);               /* v = [ 1.0 1.1 3.0 ]     */
+double h = vec_head(v);         /* h = 3.0                 */
+vec_pop(v);                     /* v = [ 1.0 1.1 ]         */
+vec_ins(v, 1, 2.0);             /* v = [ 1.0 2.0 1.1 ]     */
+vec_ins(v, 3, 2.0);             /* v = [ 1.0 2.0 1.1 2.0 ] */
+vec_del(v, 2);                  /* v = [ 1.0 2.0 2.0 ]     */
+vec s = vec_unique(v);          /* s = [ 1.0 2.0 ]         */
+v = vec_new_string("0.8 1.0");  /* v = [ 0.8 1.0 ]         */
+vec u = vec_union(s, v);        /* u = [ 0.8 1.0 2.0 ]     */
+vec i = vec_intersection(s, v); /* i = [ 1.0 ]             */
+\end{program}
+
+    Vectors are displayed using the \function{it\_printf()} family of functions. For more
+    information on how to display the new types see Chapter~\ref{cha:io}.
+
+\begin{program}{Printing}{pro:printing}
+cvec v = cvec_new_unit_roots(4);       /* vector [ 1 i -1 -i ]      */
+it_printf("$z\n", v); /* [1.000000 +1.000000i -1.000000 -1.000000i] */
+\end{program}
+
+
+\section{Matrices}
+\label{sec:matrices}
+
+      Matrices are build upon vectors in a very similar manner. A
+      generic Mat type is provided to allow the definition of any type
+      of matrix. These generic matrices are created using the
+      \function{Mat\_new()} macro by specifying the type of the
+      elements along with the width and height of the matrix. They are
+      deleted using \function{Mat\_delete()} and their width and
+      height can be get or set using \function{Mat\_width()},
+      \function{Mat\_height()}, \function{Mat\_set\_width()} and
+      \function{Mat\_set\_height()} respectively. Similarly to vectors,
+      the generic Mat type is derived into four types for the most
+      common usage:
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{5cm}p{5cm}|}
+\hline
+       Matrix type & Element type \\
+\hline
+          mat &  double \\
+          imat & int \\
+          bmat & unsigned char \\
+          cmat & cplx \\
+\hline
+\end{tabular}
+\caption{Matrix types}
+\end{center}
+\end{table}
+
+Matrix elements are accessed with the double bracket operator
+    [][], which starts at index $0$ in the (row,column) order. For example, $m[2][3]$
+    corresponds to the element at the third row and fourth column of
+    the matrix m. Each row of the matrix is a vector which can be
+    accessed using the bracket operator []. Thus, $m[2]$ is the vector
+    corresponding to the third row of the matrix. As for vectors,
+    functions requiring row or column indexes can be given the 'end'
+    keyword corresponding to the index of the last row or last column
+    respectively. As many functions are defined similarly on the mat,
+    imat, bmat and cmat types, only the mat functions will be
+    documented here when there is no ambiguity on how to derive the
+    corresponding functions for the other matrix types.  
+
+  Matrices are copied using the \function{mat\_clone()} function. Using the
+    equal sign (=) will \emph{not} copy a matrix, rather
+    create a reference to it (modifying one will modify the
+    other). Similarly, testing matrices for equality is done using the
+    \function{mat\_eq()} function instead of the
+    == operator.  Also, many functions, such as \function{mat\_set\_height()} which sets
+    the height of a matrix, may modify the actual value of the matrix
+    pointer. References created using the equal sign are then
+    \emph{invalid}. Unless you know what you're doing,
+    it is generally better never to use the equal sign on a matrix and
+    prefer the \function{mat\_clone()} call
+    instead. 
+
+\begin{program}{Copy, reference, and test for equality}{pro:copyreftestmat}
+mat m = mat_new(2,2);  /* create a new 2x2 matrix of double elements */
+m[0][0] = 0.0;         
+m[0][1] = 0.5;         /* set 2nd element of the 1st row to 0.5 */
+vec_set(m[1], 1.4);    /* set the whole 2nd row to 1.4 */
+mat m1 = m;            /* create a reference to the matrix m */
+mat m2 = mat_clone(m); /* create a copy of the matrix m */
+if(m2 == m)            /* m2 == m ? false */
+  printf("same object\n");  
+if(mat_eq(m2,m))       /* content of m2 same as m ? true */
+  printf("same matrix\n");  
+m1[0][1] = 1.0;
+m2[1][0] = 2.0;
+/* m contains [[ 0.0 1.0 ] [ 1.4 1.4 ]] */
+/* m1 contains [[ 0.0 1.0 ] [ 1.4 1.4 ]] */
+/* m2 contains [[ 0.0 0.5 ] [ 2.0 1.4 ]] */
+\end{program} 
+
+ Constant matrices, containing the same element repeated over the
+    length of the vector, are created using the
+    \function{mat\_new\_set()} call. In particular a matrix full of
+    zero or full of one is created using the
+    \function{mat\_new\_zeros()} or \function{mat\_new\_ones()} call
+    respectively. A diagonal matrix is created from a vector using
+    \function{mat\_new\_diag()}. The identity matrix is created using
+    \function{mat\_new\_eye()}. All these functions also exist in a
+    direct form, to be used on an already existing matrix
+    (\function{mat\_set}, \function{mat\_zeros}, \function{mat\_ones},
+    \function{mat\_diag}, \function{mat\_eye}).
+
+\begin{program}{Common matrices}{pro:commonmatrices}
+mat m0 = mat_new_zeros(1, 2);     /* create the matrix [[0 0]]       */
+mat m1 = mat_new_ones(2, 1);      /* create the matrix [[1] [1]]     */
+mat m2 = mat_new_set(3, 2, 2);    /* create the matrix [[3 3] [3 3]] */
+cvec cv = cvec_new_unit_roots(4); /* vector [ 1 i -1 -i ]            */
+cmat m3 = cmat_new_diag(cv);      /* create the matrix [[ 1  0  0  0 ]
+                                                        [ 0  i  0  0 ]
+                                                        [ 0  0 -1  0 ]
+                                                        [ 0  0  0 -i ]] */
+mat m4 = mat_new_eye(2);          /* create the matrix [[1 0] [0 1]] */
+
+mat_ones(m4);                     /* set m4 to [[1 1] [1 1]]         */
+\end{program}
+
+Submatrices can be extracted from a matrix using the function 
+    \function{mat\_get\_submatrix()}. A rectangle in a given 
+    matrix can be set using \function{mat\_set\_submatrix()}. Similarly,
+    \function{mat\_get\_col()}, 
+    \function{mat\_get\_row()}, 
+    \function{mat\_set\_col()} and 
+    \function{mat\_set\_row()} allow the retrieval or
+    the setting a row or a column of a matrix. Matrices can be turned into
+    vectors using \function{mat\_to\_vec()} which
+    stores the element of a matrix in a vector in raster order (fill a
+    row with elements of the vector, then proceed to next row). Given
+    the width of the matrix, a vector can also be turned into matrix
+    using the \function{vec\_to\_mat()} call. Note that
+    \function{mat\_get\_submatrix()},
+    \function{mat\_get\_row()}, 
+    \function{mat\_get\_col()}, 
+    \function{mat\_to\_vec()} and 
+    \function{vec\_to\_mat()} are constructive
+    functions, allocating a new matrix or vector object each time they
+    are called. 
+
+\begin{program}{Submatrices}{pro:submatrices}
+cvec cv = cvec_new_unit_roots(4); /* vector [ 1 i -1 -i ]               */
+cmat m1 = cmat_new_diag(cv);      /* create the matrix [[ 1  0  0  0 ]
+                                                        [ 0  i  0  0 ]
+                                                        [ 0  0 -1  0 ]
+                                                        [ 0  0  0 -i ]] */
+cmat m2 = cmat_get_submatrix(m1, 2, 2, end, end);
+                                  /* create the matrix [[-1 0] [0 -i]]  */
+cvec_ones(m2);                    /* m2 = [[1 1] [1 1]]                 */
+cmat_set_submatrix(m1, m2, 1, 1); /* m1 = [[ 1  0  0  0 ]
+                                           [ 0  1  1  0 ]
+                                           [ 0  1  1  0 ]
+                                           [ 0  0  0 -i ]]              */
+cvec cv2 = cmat_get_col(m1, 3);   /* v = [ 0 0 0 -i ]                   */
+cmat_set_row(m1, 1, cv);          /* m1 = [[ 1  0  0  0 ]
+                                           [ 1  i -1 -i ]
+                                           [ 0  1  1  0 ]
+                                           [ 0  0  0 -i ]]              */
+cvec cv3 = cmat_to_cvec(m1);
+                        /* cv3 = [ 1 0 0 0 1 i -1 -i 0 1 1 0 0 0 0 -i ] */
+m3 = cvec_to_cmat(cv3, 8);        /* m3 = [[ 1  0  0  0  1  i -1 -i ]
+                                           [ 0  1  1  0  0  0  0 -i ]]  */
+\end{program} 
+
+    Some common arithmetic operations are defined on matrices. Scalar
+    operations include \function{mat\_incr()}, \function{mat\_decr()},
+    \function{mat\_mul\_by()} and \function{mat\_div\_by()}, which
+    respectively add, subtract, multiply or divide each element of a
+    matrix with a scalar element. These operations may also be
+    performed only on a specific row or column of the matrix by adding
+    '\_row' or '\_col' to the function name
+    (e.g. \function{mat\_col\_incr()}). Elementwise operations between
+    matrices are performed using the \function{mat\_elem\_add()},
+    \function{mat\_elem\_sub()}, \function{mat\_elem\_mul()},
+    \function{mat\_elem\_div()} functions which respectively add,
+    subtract, multiply or divide each element of a first matrix with
+    the corresponding element in the matrix vector. Matrices are added
+    or subtracted using \function{mat\_add()} or \function{mat\_sub()}
+    respectively (or equivalently \function{vec\_elem\_add} and
+    \function{vec\_elem\_sub}). The product of two matrices, of a
+    matrix with a vector, or of a vector with a matrix is obtained
+    using \function{mat\_mul()}, \function{mat\_vec\_mul()} or
+    \function{vec\_mat\_mul()} respectively. To transpose a matrix,
+    use \function{mat\_transpose()}. Matrices are inverted using
+    \function{mat\_inv()}. Note that constructive versions of these last two
+    functions are defined (\function{mat\_new\_transpose()}, \function{mat\_new\_inv()}).
+
+    Mathematical functions can be applied to matrices using the
+    \function{mat\_apply\_function()} call. Functions are defined
+    using the it\_function\_t type, for more information see~\ref{sec:functions}. 
+    Minimum and maximum values of a matrix are
+    obtained with the \function{mat\_min()} and \function{mat\_max()} calls respectively.
+
+    The sum of all elements in a matrix is computed using
+    \function{mat\_sum()}. It can also be computed only on a specific
+    row or column using \function{mat\_row\_sum()} or
+    \function{mat\_col\_sum()} respectively. Additionnally, the vector
+    corresponding to the sum of each columns or the sum of each rows
+    is available through \function{mat\_cols\_sum()} or \function{mat\_rows\_sum()}
+    respectively.
+
+    Matrices are normalized using \function{mat\_normalize()},
+    resulting in a matrix whose sum is equal to one. The mean of a
+    matrix is obtained using \function{mat\_mean()}. The unbiased
+    variance of a matrix can be computed with the
+    \function{mat\_variance()} function. The one and infinite norms
+    are obtained using mat\_norm\_1() and \function{mat\_norm\_inf()}
+    respectively.
+
+
+\begin{program}{Operations on matrices}{pro:matrixoperations}
+mat m1 = mat_new_set(4, 2, 2);         /* matrix [[4 4] [4 4]]     */
+mat m2 = mat_new_eye(2);               /* matrix [[1 0] [0 1]]     */
+mat_incr(m1, 2);                       /* m1 = [[6 6] [6 6]]       */
+mat_col_incr(m1, 2, 4);                /* m1 = [[6 10] [6 10]]     */
+mat_div_by(m1, 2);                     /* m1 = [[3 5] [3 5]]       */
+mat_add(m1, m2);                       /* m1 = [[4 5] [3 6]]       */
+mat_mul(m1, m2);                       /* m1 = [[4 5] [3 6]]       */
+mat_transpose(m1, m2);                 /* m1 = [[4 3] [5 6]]       */
+mat_elem_mul(m1, m2);                  /* m1 = [[4 0] [0 6]]       */
+
+mat_eval(m1, IT_FUNCTION(sqrt), NULL); /* m1 = [[2 0] [0 2.45 ]]   */
+m1[1][0] = 1;                          /* m1 = [[2 0] [1 2.45 ]]   */
+double s = mat_sum(m1);                /* s = 5.45                 */
+vec v = mat_cols_sum(m1);              /* v = [ [3] [2.45] ]       */
+double mean = mat_mean(m1);            /* mean = 5.45/4 = 1.36     */
+double norm1 = mat_norm_1(m1);         /* 1-norm = 3.45            */
+double normI = mat_norm_inf(m1);       /* infinite-norm = 3        */
+\end{program}
+
+    Matrices are displayed using the \function{it\_printf()} family of
+    functions. For more information on how to display the new types
+    see \ref{cha:io}.
+
+\begin{program}{Printing}{pro:printingmatrix}
+mat v = mat_new_eye(4);       /* identity matrix in dim. 4 */
+it_printf("#f\n", v); /* [[1.000000 0.000000 0.000000 0.000000]  */
+                          [0.000000 1.000000 0.000000 0.000000]  */
+                          [0.000000 0.000000 1.000000 0.000000]  */
+                          [0.000000 0.000000 0.000000 1.000000]] */
+\end{program}
+
+\section{Functions}
+\label{sec:functions}
+
+      In order to handle continuous functions (e.g. for probability
+      density functions) a new it\_function\_t type is
+      defined. Functions have only one variable 'x' of double type,
+      and return a single real value of double type too. They are
+      declared using the \function{it\_function()} macro, with no return
+      value and no argument. Here is a simple example of a function
+      called 'normal' returning the value of a gaussian pdf with zero
+      mean and variance equal to one.
+
+\begin{program}{Function example}{pro:functionexample}
+it\_function(normal)
+{
+  return(1/sqrt(2.0*M_PI) * exp(-x*x / 2.0));
+}
+\end{program}
+
+      Although functions are always univariate, they can have extra
+      parameters to modify they behaviour. Function parameters are
+      declared using the \function{it\_function\_args()} macro. Each
+      parameter is declared in a struct-like manner. A function
+      parameters is accessed as an element of the it\_this
+      structure. For example we can now define a function called
+      'gaussian' with a varying parameter sigma representing the
+      standard deviation of the gaussian:
+
+\begin{program}{Function example (with parameters)}{pro:functionexampleparamters}
+/* the gaussian function with parameter sigma */
+it_function_args(gaussian) {
+  double sigma;  /* standard deviation */
+};
+it_function(gaussian)
+{
+  double sigma = it_this->sigma;
+
+  return(1.0 / (sqrt(2.0*M_PI)*sigma) * exp(-x*x / (2.0*sigma*sigma)));
+}
+\end{program}
+
+      There are some predefined functions in \libit. One is
+      'itf\_identity', the identity function (which returns x). Other
+      are operators which allow to perform basic operations on
+      functions, such as addition, multiplication, composition,
+      differentiation and integration. An operator is actually a
+      function taking one or more function and its arguments as
+      parameters. Here is an example on how to build a function which
+      is the product of the identity and our previously defined
+      gaussian:
+
+\begin{program}{Multiplication operator example}{pro:muloperatorex}
+/* declare the gaussian parameters */
+it_function_args(gaussian) gaussian_args;
+/* declare the multiplication operator parameters */
+it_function_args(mul) mul_args;
+
+/* function product */
+mul_args.f = itf_identity; /* first operand: the identity function  */
+mul_args.f_args = NULL;    /* which takes no special parameters.    */
+mul_args.g = gaussian;     /* second operand: our gaussian function */
+mul_args.g_args = &gaussian_args;  /* and its arguments (sigma) */
+
+gaussian_args.sigma = 2;   /* set sigma to 2 */
+itf_mul(2, &mul_args); /* compute x*g(x, sigma) for x = 2, sigma = 2 */
+itf_mul(1, &mul_args); /* compute x*g(x, sigma) for x = 1, sigma = 2 */
+gaussian_args.sigma = 3;   /* set sigma to 3 */
+itf_mul(2, &mul_args); /* compute x*g(x, sigma) for x = 2, sigma = 3 */
+\end{program}
+
+      Since operators are just another kind of function, they can be
+      composed easily. Standard C functions taking only a double as
+      their argument (like many functions of math.h) can be cast into
+      it\_function\_t using the \function{IT\_FUNCTION()} macro. Here is another
+      example on how to compute the derivative of the arctangent:
+
+\begin{program}{Differentiation example}{pro:diffex}
+/* derivatives */
+differentiate_args.function = IT_FUNCTION(atan); /* the arctangent function */
+differentiate_args.args = NULL;
+itf_differentiate(2.0, &differentiate_args); /* compute the derivative of
+                                                 the arctangent in 2 (=1/5) */ 
+\end{program}
+
+      Note that there exists also a similar it\_ifunction\_t type for
+      functions of a unique integer variable returning an integer
+      variable. Multivariate functions taking a input vector and
+      returning a double are also defined as it\_vfunction, however no
+      operation is defined on these objects yet.
+
+

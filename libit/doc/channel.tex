@@ -1,0 +1,104 @@
+\chapter{Channel Coding Tools}
+\label{cha:channelcoding}
+
+      This chapter presents the various channel coding tools provided by libit.
+
+\section{Modulation}
+\label{sec:modulation}
+
+     Modulation consists in encoding a binary vector representing the
+     message into a vector representing the physically emitted
+     message. Currently only binary phase shift keying (BSPK)
+     modulation is provided.
+
+     BPSK modulation consists in coding each bit of the message with
+     either a +1 (for bit 1) or a -1 (for bit 0) value.
+
+
+  \begin{program}{BPSK modulation example}{pro:bpsk}
+  /* generate a random message of 10 equiprobable bits */
+  bvec message = source_binary(10, 0.5);
+  /* modulate the message using BPSK */
+  vec modulated = modulate_bpsk(output);
+\end{program}
+
+
+\section{Channels}
+\label{sec:channels}
+
+     Channels are used to simulate transmission noise. Currently the
+  additive white gaussian noise (AWGN) and binary symetric (BSC)
+  channels are defined.  
+
+     The binary symetric channel is used simply by knowing the
+  cross-over probablity, that is the probability for a bit to be
+  inverted during transmission. To simulate transmission over a BSC
+  channel, use the \function{channel\_bsc()} function. 
+
+  \begin{program}{BSC channel example}{pro:bscchannel}
+  /* generate a random message of ten equiprobable bits */
+  bvec message = source_binary(10, 0.5);
+
+  /* send over a BSC channel of cross-over probability 0.1 */ 
+  bvec received = channel_bsc(message, 0.1);
+\end{program}
+
+     The AWGN channel is parametrized by the standard deviation of the
+  additive white noise added during transmission. To simulate
+  transmission over an AWGN channel, use the 
+  \function{channel\_awgn()} function. 
+
+\begin{program}{AWGN channel example}{pro:awgnchannel}
+  /* generate a random message of ten equiprobable bits */
+  bvec message = source_binary(10, 0.5);
+  /* modulate the message using BPSK (0 => -1, 1 => +1) */
+  vec modulated = modulate_bpsk(output);
+  /* send over an AWGN channel of standard deviation 0.5 */ 
+  vec received = channel_awgn(message, 0.5);
+\end{program}
+
+
+\section{Convolutional Codes}
+\label{sec:convolutionalcodes}
+
+     Convolutional codes of rate $k:n$ are provided using the
+it\_convolutional\_code\_t object type. They are initialized from the
+matrix of generator polynomials, with each row representing an input
+bit and each column an output bit. Sequences are encoded using the
+\function{it\_convolutional\_code\_encode()}
+call. Viterbi decoding is provided through the 
+\function{it\_viterbi\_decode()} provided
+the metrics are given. These metrics are represented using matrix of
+$2^n$ columns corresponding to branch labels (the n bits output by the
+convolutional code) and a number of rows equal to the length of the
+sequence. The Viterbi algorithm returns the sequence of maximal total
+metric. Here is an example declaring and using a $133/171$ convolutional
+code of rate one half: 
+
+\begin{program}{Convolutional code example}{pro:convolutionalcodes}
+  /* the matrix of generator polynomials */
+  imat generator = imat_new(1, 2); 
+  generator[0][0] = 0133; /* generator polynomial using the C octal notation */
+  generator[0][1] = 0171;
+
+  /* create the convolutional code */
+  it_convolutional_code_t *code = it_convolutional_code_new(generator);
+
+  /* generate a random binary sequence of 100 bits */
+  bvec input = source_binary(100, 0.5);
+
+  /* encode the sequence */
+  output = it_cc_encode(code, input);
+
+  /* modulate */
+  vec modulated = modulate_bpsk(output);
+
+  /* transmit over an AWGN channel of variance 1/4 */
+  vec received = channel_awgn(modulated, 0.5);
+ 
+  /* compute metrics */
+  mat metrics = bspk_metrics(cc, received);
+
+  /* decode */
+  bvec decoded = it_viterbi_decode(cc, metrics);
+\end{program}

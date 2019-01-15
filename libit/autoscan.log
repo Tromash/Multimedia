@@ -1,0 +1,91 @@
+autoscan: warning: missing AC_CHECK_FUNCS([pow]) wanted by: 
+	vec.c:370
+	vec.c:472
+	vec.c:474
+autoscan: warning: missing AC_CHECK_FUNCS([sqrt]) wanted by: 
+	vec.c:333
+autoscan: warning: missing AC_CHECK_HEADERS([stddef.h]) wanted by: 
+	vec.h:5
+autoscan: warning: missing AC_CHECK_HEADERS([stdlib.h]) wanted by: 
+	test_vec.c:5
+	vec.h:6
+	vec_spec.c:2
+	vlc.c:1
+autoscan: warning: missing AC_CHECK_HEADERS([string.h]) wanted by: 
+	vlc.c:2
+autoscan: warning: missing AC_FUNC_MALLOC wanted by: 
+	test.c:4
+	vlc.c:8
+	vlc.c:15
+	vlc.c:16
+	vlc.c:17
+	vlc.c:18
+	vlc.c:25
+	vlc.c:32
+	vlc.c:33
+	vlc.c:34
+	vlc.c:35
+autoscan: warning: missing AC_FUNC_MEMCMP wanted by: 
+	vec.h:59
+autoscan: warning: missing AC_FUNC_REALLOC wanted by: 
+	vec_spec.h:16
+autoscan: warning: missing AC_HEADER_STDC wanted by: 
+	test_vec.c:7
+	vec.h:5
+	test_vec.c:5
+	vec.h:6
+	vec_spec.c:2
+	vlc.c:1
+	vlc.c:2
+	vlc.c:37
+	vlc.c:38
+	vlc.c:39
+	vlc.c:40
+autoscan: warning: missing AC_TYPE_SIZE_T wanted by: 
+	test.c:1
+	test.c:4
+	test.c:5
+	test.c:5
+	vec.c:12
+	vec.c:23
+	vec.c:34
+	vec.c:43
+	vec.c:59
+	vec.c:75
+	vec.c:122
+	vec.c:138
+	vec.c:154
+	vec.c:170
+	vec.c:188
+	vec.c:206
+	vec.h:26
+	vec.h:26
+	vec.h:26
+	vec.h:46
+	vec.h:52
+	vec_spec.c:130
+	vec_spec.c:137
+	vec_spec.c:144
+	vec_spec.c:152
+	vec_spec.c:159
+	vec_spec.c:166
+	vec_spec.c:174
+	vec_spec.c:183
+	vec_spec.c:193
+	vec_spec.c:203
+	vec_spec.c:214
+	vec_spec.c:224
+	vec_spec.h:16
+	vec_spec.h:16
+	vec_spec.h:59
+	vec_spec.h:60
+	vec_spec.h:61
+	vec_spec.h:63
+	vec_spec.h:64
+	vec_spec.h:65
+	vec_spec.h:67
+	vec_spec.h:68
+	vec_spec.h:70
+	vec_spec.h:71
+	vec_spec.h:73
+	vec_spec.h:74

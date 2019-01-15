@@ -1,0 +1,242 @@
+\chapter{Input/Output}
+\label{cha:io}
+
+
+\section{Printing vector, matrices and complex numbers}
+
+      \libit provides a new set of printf functions to handle the
+      vector and matrix types easily. Since the \function{it\_printf} function is
+      based on the C \function{printf} function, it supports all the basic types
+      (\%c,\%d,\%s,...) and modifiers (\%.03f). The
+      \function{it\_fprintf} and \function{it\_vfprintf} functions are
+      also provided as extensions to the fprintf and vfprintf
+      functions.
+
+      An additional complex type (cplx) is defined in \libit and can be printed
+      using letter z. Complex numbers are printed as a pair of double floats in the 
+      form 'a + b * i' and therefore accept the same modifiers as double values.
+
+      Vectors of any type can be printed by substituting the character
+      '\$' to the character '\%' in the format string. For example a
+      vector of complex (cvec) is printed by using the format string
+      "\$z". Vectors are printed as a sequence of elements, enclosed
+      in brackets. Modifiers in the vector format string are applied
+      to all printed elements of the vector. For example "\$.3f"
+      prints a vector of floats all limited to 3 decimals.
+      Additionally, there is a default type 'v' to print floats
+      similarly to MATLAB (tm). The default is to limit floats to 3
+      decimals. It can be changed using the
+      \function{it\_set\_vec\_default\_fmt()} call. In the default
+      setting, "\$v" is therefore equivalent to "\$.3f".
+
+      Similarly, matrices are printed by substituting the character '\#' to the
+      character '\%' in the format string. Therefore, a matrix of double (mat),
+      is printed using the "\#f" format string. Matrices are printed with each
+      row on a line, printed as a vector (with brackets), with all lines
+      enclosed in two additional brackets. All modifiers apply to the matrix
+      elements as in vectors. Besides, a default format 'm' is defined.
+      It is equivaled to "9.3f" in the default setting and can be changed with
+      the \function{it\_set\_mat\_default\_fmt()} call.
+
+      In order to print the character '\#' or '\$', the format string
+      "\#\#" or "\$\$" can be used respectively.
+
+      Here is an example of the various extensions to the printf call.
+
+\begin{program}{Printing example}{pro:printingexample}
+vec v = vec_new_ones(5);     /* create a new vector of 5 elements set to 1 */
+it_printf("$v\n", v);        /* print this vector as
+                                  [ 1.000 1.000 1.000 1.000 1.000 ]        */
+
+mat m = mat_new_zeros(2, 3); /* create a new matrix of 2 rows and 3 columns */
+it_printf("#m\n", m);        /* print the matrix as 
+                                  [[    0.000    0.000    0.000]
+                                   [    0.000    0.000    0.000]]           */
+
+cplx c = cplx(2, 3);         /* create the complex number 2 + 3i */
+it_printf("%z\n", c);        /* print the complex as
+                                  2.000000 + 3.000000 * i                   */
+\end{program}
+
+
+\section{Image reading and writing}
+\label{sec:imreadwrite}
+
+Images can be read in the PGM format as matrices using the
+      \function{mat\_pgm\_read()} or \function{imat\_pgm\_read()}
+      functions. Both these functions return the matrix of pixels,
+      representing intensities between 0 and the maximum value
+      specified in the PGM (generally 255). Similarly, images can be
+      written to disk using \function{mat\_pgm\_write()} or 
+      \function{imat\_pgm\_write()}.The sample
+      values are read as integers and written with proper rounding and
+      clipping. Some information can be retrieved from any PNM file
+      using \function{pnm\_info()}, for
+      example to check the image is in a supported format (PGM type 5
+      currently).
+
+\begin{program}{Image input/output}{pro:iminputoutput}
+  imat m;
+
+  m = imat_pgm_read("image.pgm");  /* read the image      */
+  mat_transpose(m);                /* transpose the image */
+  imat_pgm_write(m, "image.pgm");  /* write the image     */
+
+  char comments[1000]; /* the comments in the PNM       */
+  int width, height;   /* width and height of the image */
+  int pnm_type;        /* type of the PNM file          */
+  int maxval;          /* maximum intensity value       */
+  pnm_info("image.pgm",  &pnm_type,  &width,  &height, &maxval, comments, 1000);
+\end{program}
+
+
+\section{Sound reading and writing}
+\label{sound:imreadwrite}
+
+
+  Sound files can be read in the WAV format as matrices by the following calls:
+      \function{mat\_wav\_read()} and \function{imat\_wav\_read()}. A
+      row of the matrix corresponds to a channel (i.e. stereo files
+      are read as a two-row matrix). The columns correspond to the
+      instants in time. Similarly, sounds can be written to disk using
+      \function{mat\_wav\_write()} or
+      \function{imat\_wav\_write()} call,
+      provided the sampling rate and sample resolution is also
+      given. Some information can be retrieved from any WAV file using
+      \function{wav\_info()} call. Compressed
+      WAV files are not supported. 
+
+\begin{program}{Sound input/output}{pro:soundinputoutput}
+  imat m;
+
+  m = imat_wav_read("sound.wav"); /* read the sound            */
+  vec_reverse(m[0]);              /* reverse the first channel */
+  imat_wav_write(m, "sound.wav"); /* write the sound           */
+
+  int channels;        /* number of channels          */
+  int srate;           /* sampling rate               */
+  int depth;           /* sampling resolution in bits */
+  int length;          /* number of samples           */
+  wav_info( sound_in, &channels, &srate, &depth, &length );
+\end{program}
+
+
+\section{Parser}
+
+  In order to manage sources of external data, a parser is provided. 
+The parser allows to handle three kind of sources: 
+\begin{itemize}
+\item command line arguments, 
+\item parameter files, 
+\item strings.
+\end{itemize}
+
+These sources are fed to the initialization function
+\function{parser\_init} by a call of the form
+
+{\small
+\begin{verbatim}
+parser = parser_init(argc, argv, "param.dat", "a=-35\nb=3\n");
+\end{verbatim}
+}
+
+Note that if a variable is defined in two sources handled by the same
+parser, the data will be retrieved in the order of the initialization
+function argument. Hence, the latter kind of source (strings) allows
+one to easily manage the default arguments.  If extra sources are
+added to the parser (see below), the priority is given by the order in
+which the sources have been added to the parser.
+
+There is also a function per kind of source that adds the source to
+the parser internal data.  Note that, to use one of these functions
+the parser must previously been allocated by an initialization
+function.  The table below summarizes the list of
+functions for each kind of source.
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{5cm}p{5cm}|}
+\hline
+Kind of Source & Extra source Function \\
+\hline
+Command line arguments & parser\_add\_params \\
+File & parser\_add\_file \\
+String & parser\_add\_string \\ 
+\hline
+\end{tabular}
+\caption{Parser source adding functions}
+\end{center}
+\end{table}
+
+The three kinds of source may be useful in the same program.  Hence, a
+source added while initializing the parser is always with the highest
+priority.  The variables are retrieved with the functions summarized
+in the table below.  Note that the objects are initialized by the
+parser and must be freed afterwards.  
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|p{5cm}p{5cm}|}
+\hline
+Function name & variable type \\
+\hline
+parser\_get\_int & int \\
+parser\_get\_double & double \\
+parser\_get\_byte & byte \\
+parser\_get\_cplx & cplx \\
+parser\_get\_string & char * \\
+parser\_get\_vec & vec \\
+parser\_get\_ivec & ivec \\
+parser\_get\_bvec & bvec \\
+parser\_get\_cvec & cvec \\
+parser\_get\_mat & mat \\
+parser\_get\_imat & imat \\
+parser\_get\_bmat & bmat \\
+\hline
+\end{tabular}
+\caption{Functions to retrieve variables with a parser}
+\end{center}
+\end{table}
+
+
+The parser type is \texttt{parser\_t}. As in most of advanced types, the
+user should not handle directly \texttt{parser\_t} object, but a pointer
+\texttt{parser\_t *}.  The corresponding memory area is allocated with the
+functions \function{parser\_init\_params},
+\function{parser\_init\_file} or \function{parser\_init\_string}.  
+For a typical program, the following order of priority between sources is of
+interest: command line arguments, parameter file, string for default
+parameters.  The program below illustrates this scenario.
+
+\begin{program}{Parser example}{pro:parser}
+  /* Initialization of the parser with all sources                   */
+  parser_t * parser = parser_init( argc, argv, "param.dat", "a=-35" ); */
+
+  /* Add some default values if the parameters have not been defined */
+  parser_add_string( parser, "def=9\nmyvec=[-1,-2,-3]" );
+
+  /* Print the content pre-processed by the parser                   */
+  parser_print( parser );
+
+  /* Retrieve some variables with the parser                         */
+  i   = parser_get_int(parser, "a");
+  def = parser_get_int(parser, "def");
+  dbl = parser_get_double(parser, "dbl");
+  s   = parser_get_string(parser, "S");
+  v   = parser_get_vec(parser, "myvec");       /* By default [1 2 3] */
+  iv  = parser_get_ivec(parser, "myivec");
+
+  /* Test if the variable myivec is defined                          */
+  if( !parser_exists(parser, "myivec") )
+    it_warning("Variable myivec is not defined\n");
+
+  /* Free the pointer                                                */
+  parser_delete(parser);   
+  free(s);
+  vec_delete(v);                             /* Vectors must be free */
+  ivec_delete(v);
+\end{program}
+
+

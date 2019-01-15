@@ -1,0 +1,225 @@
+\chapter{Measures}
+
+      This chapter presents some various measures implanted in \libit,
+including the ones encountered in coding and information theory.
+
+
+\section{Distance measures}
+   
+    Various distances are provided to measure differences between
+    vectors, such as the Hamming distance and the symbol or bit error
+    rate (SER/BER), the Levenshtein distance, and the norm distance
+    and mean square error (MSE).
+
+    The Hamming distance is the number of elements that are not equal
+    in the two vectors. If the vectors are not of the same size, the
+    distance is increased by the difference of lengths (i.e. the
+    missing symbols are assumed to be not equal). Divided by the
+    length of the original vector, this leads to the symbol error rate
+    (SER). The Hamming distance is computed using \function{vec\_distance\_hamming()}. The
+    SER is computed using \function{vec\_ser()}, \function{ivec\_ser()} and 
+    \function{bvec\_ber()}. If the 'received' vector
+    (second parameter) has a larger size as the 'original' vector
+    (first parameter), the excess symbols are discarded for computing
+    the SER.
+
+    The Levenshtein distance corresponds to the minimum of insertion,
+    deletion or substitutions needed to transform one vector into
+    another. The costs need not be equal for all operations although
+    they are often assumed so. The function
+    \function{ivec\_distance\_levenshtein()}
+    is provided to compute this distance.
+
+    The Euclidean norm between two vectors, corresponding the norm of
+    the difference of the vectors, is computed using 
+    \function{vec\_distance\_norm()}. It is
+    defined the same way for matrices (e.g. to compute the norm
+    between images) using 
+    \function{mat\_distance\_norm()}. The
+    norm to use is given as the power factor which is often assigned
+    the value 2. If the vectors are not of the same size, the distance
+    is increased assuming that missing elements are equal to 0. The
+    mean square error is computed by dividing the 2-norm between two
+    vectors by the number of elements, and obtained from 
+    \function{vec\_distance\_mse()} and 
+    \function{mat\_distance\_mse()}. Missing
+    elements are assumed to be equal to a parameter specifying the
+    default reconstruction value.
+ 
+
+\begin{program}{Distance example}{pro:distanceex}
+ivec v1 = ivec_new_string("1 2 3");            /* v1 = [ 1 2 3 ]        */
+ivec v2 = ivec_new_string("0 2 5");            /* v2 = [ 0 2 5 ]        */
+ivec v3 = ivec_new_string("0 1 2 3");          /* v3 = [ 0 2 2 3 ]      */
+
+/* compute the hamming distance between v1 and v2 */
+ivec_distance_hamming(v1, v2);                 /* hamming distance = 2  */ 
+
+/* compute the SER between v1 and v2 */
+ivec_ser(v1, v2);                              /* SER = 2/3 = 0.667     */ 
+
+/* compute the Levenshtein distance between v1 and v3 */
+ivec_distance_levenshtein(v1, v3, 1, 1, 1);    /* deletion+subst. => 2  */
+
+/* compute the MSE between v1 and v2 */
+ivec_distance_mse(v1,v2,0);                    /* (1 + 2^2) / 3 = 1.667 */
+\end{program}
+
+
+\section{PDF estimation and measure}
+
+    The PDF (probability density function) of a stationary ergodic
+    source can be estimated from the histogram of the samples of that
+    source. The histogram of a vector of samples is obtained using
+    \function{histogram()}, returning the
+    number of occurences of each particular value of the alphabet in
+    the input vector. The normalized histogram, representing an
+    estimator of the PDF, is obtained using 
+    \function{histogram\_normalized()}. The
+    cardinal of the set of integer values taken by the source must be
+    given to these functions, and the input vector is assumed to be
+    positive. The conditional histogram, that is the bidimensional
+    histogram of a sample knowing the previous sample, is computed
+    similarly using \function{histogram\_cond()}.
+
+\begin{program}{Histogram example}{pro:histoex}
+ivec v = ivec_new_string("0 0 1 0 1 1 1 0 0 0"); /* [ 0 0 1 0 1 1 1 0 0 0 ] */
+
+/* compute the histogram of v assumed to be a binary source */
+ivec h = histogram(2, v);                        /* h = [ 6 4 ]             */
+
+/* estimate the first-order PDF of v */       
+vec pdf = histogram_normalized(2, v);            /* pdf = [ 0.6 0.4 ]       */
+
+/* compute the conditional histogram of v */       
+imat cpdf = histogram_cond(2, v);                 /* cpdf = [ [ 3 2 ]
+                                                             [ 2 2 ] ]      */
+\end{program}
+
+  To compute the stationary PDF of a Markov chain from the
+    transition probability matrix the function 
+    \function{markov\_marg\_pdf()} is
+    provided. It uses the Froebenius theorem which states that the
+    stationary PDF is obtained from the eigen vector of the transition
+    probability matrix associated with the eigenvalue 1.  
+
+\begin{program}{Stationary law estimation example}{pro:statlawest}
+ivec v = ivec_new_string("0 0 1 0 1 1 1 0 0 0"); /* [ 0 0 1 0 1 1 1 0 0 0 ]  */
+
+/* compute the conditional PDF of v */
+imat ch = histogram_cond(2, v);                  /* ch = [ [ 3 2 ]
+                                                           [ 2 2 ] ]         */
+mat cpdf = mat_new(2, 2);
+int s = imat_sum_col(cpdf, 0);
+cpdf[0][0] = (double) ch[0][0] / s;
+cpdf[1][0] = (double) ch[1][0] / s;
+int s = imat_sum_col(cpdf, 1);
+cpdf[0][1] = (double) ch[0][1] / s;
+cpdf[1][1] = (double) ch[1][1] / s;
+                                                 /* cpdf = [ [ 0.6 0.5 ]
+                                                             [ 0.4 0.5 ] ]   */
+
+/* estimate the stationary law */
+vec pdf = markov_marg_pdf(cpdf);                 /* pdf = [0.555 0.444]      */
+                                                 /*     = [5/9 4/9]          */
+\end{program}
+
+    The expectation (first-order moment) and variance (second-order
+    moment) of a discrete source are computed from the PDF and the
+    values associated to each symbol using 
+    \function{source\_expectation()} and \function{source\_variance()}
+    respectively.
+
+\begin{program}{Expectation and variance example}{pro:expvarex}
+vec pdf = vec_new_string("0.5 0.3 0.1 0.1"); /* probability density function */
+vec rec = vec_new_string("-1 0 1.5 2.5");    /* values of the symbols        */
+
+/* compute the expectation of the source */
+double mean = source_expectation(pdf, rec);  /* -0.5 + 0.15 + 0.25 = -0.1    */
+
+/* compute the variance of the source */
+double var = source_variance(pdf, rec);      /* 0.5 + 0.225 + 0.625 = 1.35   */
+\end{program}
+
+    A PDF can be check for validity using \function{is\_valid\_pdf()}, by verifying it
+    sums to one up to a small rounding error. Similarly a transition
+    probability matrix can be checked for validity using \function{is\_valid\_markov\_matrix()}.
+
+
+\section{Information measures}
+
+    Information measures such as the entropy, conditional entropy, and
+    Kullback-Leibler distance are provided on discrete sources
+    PDF. The entropy $H(X)$ of a discrete source $X$ of cardinal $N$ with
+    PDF $P(X)$ is defined as:
+
+$$H(X) = -\sum\limits_{x=0}^{N-1} P(X=x) \log_2 P(X=x)$$
+
+    If $P(X=x)$ is null, it is omitted from the sum (which stems from
+    the limit of $x \log x$). It represents the average number of bits
+    per sample needed to represent a realization of the source. The
+    entropy of a PDF (expressed as a vector), is computed using the
+    \function{entropy()} function. The special case of the
+    binary source can be computed more simply by providing the
+    probability of the zero bit and calling \function{entropy\_bin()}.
+
+    The conditional entropy $H(X|Y)$ of a discrete N-valued random
+    variable $X$ knowing another discrete M-valued random variable Y
+    given the joint PDF matrix $P(X,Y)$ is defined as:
+
+$$
+H(X|Y) = -\sum\limits_{x=0}^{N-1}\sum\limits_{y=0}^{M-1} P(X=x,Y=y) \log_2 P(X=x|Y=y)
+$$
+
+    In \libit, only the special case of a random markov source is
+    currently supported, where $N=M$ and given the transition matrix
+    $P(X|Y)$, the joint PDF is estimated by first decomposing $P(X,Y)$
+    into $P(X|Y) \cdot P(Y)$ and obtaining $P(Y)$ from the Froebenius
+    theorem. This conditional entropy can be computed using 
+    \function{entropy\_markov()} and providing
+    the matrix of transition probability $P(X|Y)$.
+
+    The Kullback-Leibler distance or relative entropy is defined
+    between two PDF $P(X)$ and $P'(X)$ as:
+
+$$d_K(P(X),P'(X)) = \sum\limits_{x=0}^{N-1} P(X=x) \log_2 \frac{P(X=x)}{P'(X=x)}$$
+
+    It corresponds to the excess rate needed for coding the source
+    described by P(X) using the PDF P'(X) instead of the appropriate
+    PDF P(X). Strictly speaking this measure is not a distance, as it
+    is not symmetric. It can be computed using the function 
+    \function{vec\_distance\_kullback\_leibler()}.
+
+
+\begin{program}{Information measure example}{pro:informmeasure}
+/* The probability distribution function of the source        */
+vec pdf = vec_new_string( "0.6 0.4" );           /* pdf = [ 0.6 0.4 ]        */
+
+/* a conditional PDF for a markov source (same stationary law as above)      */
+mat cpdf = mat_new(2, 2);
+cpdf[0][0] = 2.0/3.0; /* P(X(t)=0 | X(t-1)=0) */
+cpdf[1][0] = 1.0/3.0; /* P(X(t)=1 | X(t-1)=0) */
+cpdf[0][1] = 1.0/2.0; /* P(X(t)=0 | X(t-1)=1) */
+cpdf[1][1] = 1.0/2.0; /* P(X(t)=1 | X(t-1)=1) */
+                                                 /* cpdf = [ [ 0.667 0.5 ]
+                                                             [ 0.333 0.5 ] ] */
+
+/* compute the entropy */   
+double H  = entropy(pdf);                        /* H = 0.971 */
+double Hb = entropy_bin(0.6);                    /* same thing using P(X=0)  */
+
+/* compute the conditional entropy */
+double Hc = entropy_markov(cpdf);                /* Hc = 0.951 < H */
+
+
+/* a uniform PDF */
+vec uni = vec_new_set(2, 1.0/2.0);               /* uni = [ 0.5 0.5 ]        */
+
+/* compute the relative entropy */
+double r = vec_distance_kullback_leibler( pdf, uni );   /* r = 0.029 = 1 - H */
+\end{program}
+
+
+
+
+

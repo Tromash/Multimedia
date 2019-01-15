@@ -1,0 +1,67 @@
+<head>
+<title>libit</title>
+<link href="libit.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<!-- Javascript -->
+<script type="text/javascript">
+/* small script to highlight icons */
+function highlight(img, on) {
+
+  opacity = (on) ? 1 : 0.7; /* set opacity to 70% when off and 100% when on */
+
+  if(img.style.MozOpacity)  /* Mozilla style */
+    img.style.MozOpacity = opacity;
+  if (img.filters)          /* IE style */
+    img.filters.alpha.opacity = opacity * 100;
+}
+</script>
+
+
+<div id="container">
+
+<!-- entete de la page -->
+<div id="entete">
+<table>
+<tr>
+<td>
+<!-- barre d acces rapide premier niveau -->
+<div id="navBar">
+<center>
+<table cellspacing="8">
+<tr>
+	<td>
+		<a href="index.html">main</a>
+	</td>
+	<td>
+		<a href="modules.html">modules</a>
+	</td>
+	<td>
+		<a href="functions.html">functions</a>
+	</td>
+	<td>
+		<a href="files.html">files</a>
+	</td>
+<!--	<td>
+		<a href="faq/index.html">FAQ</a>
+
+	</td> -->
+	<td>
+		<a href="http://sourceforge.net/project/showfiles.php?group_id=132634">download</a>
+	</td>
+	<td id="first"> 
+		<a href="http://www.sf.net/projects/libit">libit@sf.net</a>
+	</td>
+</tr>
+</table>
+</center>
+</div>
+<!-- barre de localisation -->
+</td>
+</tr>
+</table>
+</div>
+

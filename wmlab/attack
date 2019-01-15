@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# $1: JPEG quality factor
+# $2: input PGM file name
+# $3: output PGM file name
+
+cjpeg -quality $1 $2 | djpeg > $3
+

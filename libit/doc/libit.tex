@@ -1,0 +1,107 @@
+% Copyright (c) 2005-2006 Vivien Chappelier, Hervé Jégou
+
+% Permission is granted to copy, distribute and/or modify this
+% document under the terms of the GNU Free Documentation License,
+% Version 1.1 or any later version published by the Free Software
+% Foundation; with no Invariant Sections, with no Front-Cover
+% Texts, and with no Back-Cover Texts. A copy of the license can
+% be found at http://www.fsf.org/copyleft/fdl.html.
+
+\documentclass[11pt]{book}
+
+\usepackage{verbatim}
+\usepackage{amsmath,amssymb}
+%\usepackage{palatino}
+\usepackage{url}
+\usepackage{fullpage}
+\usepackage{xspace}
+\usepackage{epsfig}
+
+
+\newcommand{\ligne}[1]{\rule[0.5ex]{\linewidth}{#1}}
+\newcommand{\function}[1]{\texttt{#1}}
+\newcommand{\libit}{\textsc{Libit}\xspace}
+
+\newcounter{program}
+\setcounter{program}{0}
+
+\def\thechapter{\arabic{chapter}}
+\def\theprogram{\thechapter.\arabic{program}}
+
+
+\newenvironment{program}[2]%
+{\refstepcounter{program} 
+\medskip
+\noindent \ligne{0.3mm}
+\small
+\noindent {\it Program~\theprogram: #1} 
+\label{#2}
+
+\noindent \ligne{0.3mm}
+\verbatim}%
+{\endverbatim}
+
+\def\baselinestretch{1.2}
+
+\date{16 July 2006}
+\author{Vivien Chappelier and Herv\'e J\'egou}
+\title{The libit library}
+
+
+%------------------------------------------------
+\begin{document}
+
+
+%\maketitle
+\thispagestyle{empty}
+~
+\vfill
+\begin{center}
+
+\includegraphics[width=4cm]{libitlogo}
+\bigskip \bigskip
+
+{\Large The \libit library }
+\end{center}
+\vfill
+~
+
+\newpage\thispagestyle{empty}\addtocounter{page}{-1}
+~\newpage\thispagestyle{empty}\addtocounter{page}{-1}
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.1 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with no Front-Cover
+     Texts, and with no Back-Cover Texts. A copy of the license can
+     be found at \url{http://www.fsf.org/copyleft/fdl.html}.
+\medskip
+\hfill
+ 
+{\small     \noindent Copyright 2005--2006 Vivien Chappelier, Herv\'e J\'egou}
+
+\newpage\thispagestyle{empty}\addtocounter{page}{-1}
+~\newpage\thispagestyle{empty}\addtocounter{page}{-1}
+
+\tableofcontents
+
+\input{./intro.tex}
+\input{./vecmat.tex}
+\input{./io.tex}
+\input{./measure.tex}
+\input{./source.tex}
+\input{./channel.tex}
+\input{./signal.tex}
+
+\appendix
+\input{./objects.tex}
+
+
+\end{document}
+
+
+
+
+
+
+

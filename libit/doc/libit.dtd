@@ -1,0 +1,9 @@
+<!-- libit DTD: customize and extend DocBook -->
+
+<!-- Add PDF to the list of supported graphic formats -->
+<!ENTITY % local.notation.class "| PDF">
+
+<!-- Include the docbook DTD -->
+<!ENTITY % docbook PUBLIC "-//OASIS//DTD DocBook V4.0//EN">
+
+%docbook;
