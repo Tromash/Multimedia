@@ -59,21 +59,16 @@ vec get_correlations( mat y, uint key, uint sz, uint Nc, bvec mest, uint ups )
   vec corrs = vec_new_zeros( Nc );
   vec yv;
   mat tile = mat_new_zeros( sz, sz );
-  int i, j;
 
-
-  for ( i = 0 ; i < mat_height( y ) ; i+= sz ) {
-    for ( j = 0 ; j < mat_width( y ) ; j+= sz ) {
-
-      int ii, jj;
-      for ( ii = 0 ; ii < sz ; ii++ ) {
-        for ( jj = 0 ; jj < sz ; jj++ ) {
+  for (int i = 0 ; i < mat_height( y ) ; i+= sz ) {
+    for (int j = 0 ; j < mat_width( y ) ; j+= sz ) {
+      for (int ii = 0 ; ii < sz ; ii++ ) {
+        for (int jj = 0 ; jj < sz ; jj++ ) {
           tile[ii][jj] += y[i+ii][j+jj];
         }
       }
     }
   }
-
 
   yv = mat_to_vec( tile );
 
@@ -88,6 +83,7 @@ vec get_correlations( mat y, uint key, uint sz, uint Nc, bvec mest, uint ups )
     }
     vec_delete( ui );
   }
+  
   vec_delete( yv );
   mat_delete( tile );
   mat_delete( U );
