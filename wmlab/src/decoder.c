@@ -17,17 +17,17 @@ int main(int argc, char **argv)
 
   parser_t * parser = NULL;
 
-  char * imgin; 
-  uint key, sz, ups, verbose; 
-  bvec m, mest; 
-  vec corrs; 
-  
+  char * imgin;
+  uint key, sz, ups, verbose;
+  bvec m, mest;
+  vec corrs;
+
   if ( argc == 1 )
     {
       fprintf( stderr, "Usage: %s config.cfg\n", argv[0] );
       exit( EXIT_FAILURE );
     }
-  
+
   parser=parser_init( argc, argv, argv[1], NULL );
 
   key = parser_get_int( parser, "KEY" );
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
   e = mat_estimate( y );
 
-  corrs = get_correlations( e, key, sz, bvec_length(m), mest, ups ); 
+  corrs = get_correlations_subimage( e, key, sz, bvec_length(m), mest, ups );
 
   it_printf( "BER=%f\nCorrelations=$v\n", bvec_distance_hamming( m, mest )/(double)bvec_length(m), corrs );
 
@@ -59,10 +59,9 @@ int main(int argc, char **argv)
 
   mat_delete( y  );
   mat_delete( e  );
-  
+
   free( imgin );
 
   return(EXIT_SUCCESS);
 
 }
-
