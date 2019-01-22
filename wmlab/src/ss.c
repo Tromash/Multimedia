@@ -12,31 +12,31 @@
 mat make_carriers( int Nc, int Nv, unsigned long int key, uint ups )
 {
 
-  mat temp; 
-  mat u; 
+  mat temp;
+  mat u;
   vec v;
 
-  int i= 0; 
+  int i= 0;
 
   Nv /= ups*ups;
-  
+
   temp = mat_new_zeros( (size_t)Nv, (size_t)Nc );
 
   it_seed( key );
 
-  for ( i= 0; i< Nc; i++ ) 
+  for ( i= 0; i< Nc; i++ )
     {
-      v = source_gaussian( (size_t)Nv, 0.0, 1.0 ); 
-      vec_decr( v, vec_mean( v ) ); 
+      v = source_gaussian( (size_t)Nv, 0.0, 1.0 );
+      vec_decr( v, vec_mean( v ) );
       mat_set_col( temp, (size_t)i, v );
       vec_delete(v);
-    }  
+    }
 
-  mat_gs( temp ); 
+  mat_gs( temp );
 
-  for ( i= 0; i< Nc; i++ ) 
+  for ( i= 0; i< Nc; i++ )
     {
-      v = mat_get_col( temp, i ); 
+      v = mat_get_col( temp, i );
       vec_div_by( v, sqrt(vec_variance(v)) );
 
       mat_set_col( temp, i, v );
@@ -57,9 +57,40 @@ vec get_correlations( mat y, uint key, uint sz, uint Nc, bvec mest, uint ups )
   uint Nv = sz*sz;
   mat U = make_carriers( Nc,Nv,key, ups );
   vec corrs = vec_new_zeros( Nc );
+  vec yv;
+  mat tile = mat_new_zeros( sz, sz );
+  int i, j;
 
+
+  for ( i = 0 ; i < mat_height( y ) ; i+= sz ) {
+    for ( j = 0 ; j < mat_width( y ) ; j+= sz ) {
+
+      int ii, jj;
+      for ( ii = 0 ; ii < sz ; ii++ ) {
+        for ( jj = 0 ; jj < sz ; jj++ ) {
+          tile[ii][jj] += y[i+ii][j+jj];
+        }
+      }
+    }
+  }
+
+
+  yv = mat_to_vec( tile );
+
+  for ( i = 0 ; i < mat_width( U ) ; i++ ) {
+    vec ui = mat_get_col( U, i );
+    corrs[ i ] = vec_inner_product( ui, yv );
+    if ( corrs[ i ] < 0 ) {
+      mest[ i ] = 1;
+    }
+    else {
+        mest[ i ] = 0;
+    }
+    vec_delete( ui );
+  }
+  vec_delete( yv );
+  mat_delete( tile );
   mat_delete( U );
-  
-  return corrs; 
-}
 
+  return corrs;
+}
